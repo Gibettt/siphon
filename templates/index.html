@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Downloader</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>↓</text></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <h1>
+        <span class="logo">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path d="M12 5v14m0 0l-6-6m6 6l6-6"/></svg>
+        </span>
+        Web Downloader
+      </h1>
+      <p>Deteksi framework & download kode frontend website</p>
+    </header>
+
+    <!-- URL Bar -->
+    <div class="section">
+      <div class="section-label">URL Target</div>
+      <div class="url-bar">
+        <div class="url-input-wrap">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/><path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+          <input type="url" id="urlInput" class="url-input" placeholder="https://example.com">
+        </div>
+        <button id="startBtn" class="start-btn" onclick="startCrawl()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m0 0l-6-6m6 6l6-6"/></svg>
+          Download
+        </button>
+      </div>
+      <div id="errorMsg" class="error-msg"></div>
+    </div>
+
+    <!-- Mode Tabs -->
+    <div class="section">
+      <div class="section-label">Mode</div>
+      <div class="mode-tabs">
+        <button class="mode-tab active" data-mode="normal" onclick="selectMode('normal')">
+          <span class="tab-dot"></span>
+          <span class="tab-label">Normal</span>
+          <span class="tab-desc">HTML, CSS, JS, gambar</span>
+        </button>
+        <button class="mode-tab" data-mode="deep" onclick="selectMode('deep')">
+          <span class="tab-dot"></span>
+          <span class="tab-label">Deep</span>
+          <span class="tab-desc">3D, WebGL, WASM</span>
+        </button>
+        <button class="mode-tab" data-mode="complete" onclick="selectMode('complete')">
+          <span class="tab-dot"></span>
+          <span class="tab-label">Complete</span>
+          <span class="tab-desc">POST, webpack, lazy-load</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Normal Options -->
+    <div id="normalOptions" class="section">
+      <div class="options-panel">
+        <div class="options-row">
+          <div>
+            <label class="opt-label">Max halaman</label>
+            <input type="number" id="maxPages" class="opt-input" value="30" min="1" max="200">
+          </div>
+          <div>
+            <label class="opt-label">Max assets</label>
+            <input type="number" id="maxAssets" class="opt-input" value="300" min="10" max="2000">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deep Options -->
+    <div id="deepOptions" class="section" style="display:none">
+      <div class="options-panel">
+        <div class="options-row">
+          <div>
+            <label class="opt-label">Tunggu konten (detik)</label>
+            <input type="number" id="waitSeconds" class="opt-input" value="15" min="5" max="120">
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <label class="opt-check">
+              <input type="checkbox" id="crawlIframes" checked>
+              Crawl iframes
+            </label>
+          </div>
+        </div>
+        <div class="opt-hint hint-purple">
+          ⏱ Deep mode pakai Playwright browser — butuh 30–120 detik untuk capture aset dinamis.
+        </div>
+      </div>
+    </div>
+
+    <!-- Complete Options -->
+    <div id="completeOptions" class="section" style="display:none">
+      <div class="options-panel">
+        <div class="options-row">
+          <div>
+            <label class="opt-label">Tunggu konten (detik)</label>
+            <input type="number" id="completeWait" class="opt-input" value="12" min="5" max="120">
+          </div>
+          <div>
+            <label class="opt-label">Max halaman</label>
+            <input type="number" id="completeMaxPages" class="opt-input" value="1" min="1" max="50">
+          </div>
+        </div>
+        <label class="opt-check" style="margin-top:10px">
+          <input type="checkbox" id="followLinks">
+          Ikuti link ke halaman lain
+        </label>
+        <div class="opt-hint hint-green">
+          Hasil download sudah termasuk <code>serve.py</code> — jalankan <code>python3 serve.py</code> di folder hasil untuk menghindari error POST.
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="resultCard">
+
+      <div class="status-row">
+        <span class="status-label">Status</span>
+        <span id="statusBadge" class="badge badge-queued">Antrian</span>
+        <div id="spinner" class="spinner"></div>
+      </div>
+
+      <div id="progressTrack" class="progress-track">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+
+      <div id="detectionSection" class="detection">
+        <div class="section-label">Teknologi terdeteksi</div>
+        <div id="techChips" class="tech-chips"></div>
+      </div>
+
+      <div id="statsSection" class="stats">
+        <div class="section-label">Statistik</div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-val" id="statPages">-</div><div class="stat-label">Halaman</div></div>
+          <div class="stat-box"><div class="stat-val" id="statAssets">-</div><div class="stat-label">Assets</div></div>
+          <div class="stat-box"><div class="stat-val" id="statSize">-</div><div class="stat-label">KB</div></div>
+          <div class="stat-box"><div class="stat-val" id="statTime">-</div><div class="stat-label">Detik</div></div>
+        </div>
+      </div>
+
+      <div class="log-wrap">
+        <div class="section-label">Log</div>
+        <div id="logBox" class="log-box"></div>
+      </div>
+
+      <button id="downloadBtn" class="download-btn" onclick="downloadZip()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m0 0l-6-6m6 6l6-6"/></svg>
+        Download ZIP
+      </button>
+    </div>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

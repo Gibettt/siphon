@@ -1,0 +1,18 @@
+# Environments
+venv/
+__pycache__/
+*.pyc
+
+# Downloads
+downloads/
+
+# Graphify cache
+graphify-out/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
