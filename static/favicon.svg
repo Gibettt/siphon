@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="siphonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7A3D" />
+      <stop offset="100%" stop-color="#D9480F" />
+    </linearGradient>
+    <linearGradient id="siphonPath" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#FFE8DC" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8.5" fill="url(#siphonGrad)" />
+  <!-- Elegant continuous Siphon S -->
+  <path d="M21.5 10.5C21.5 9.12 20.38 8 19 8H13C10.24 8 8 10.24 8 13C8 15.76 10.24 18 13 18H19C21.76 18 24 20.24 24 23C24 25.76 21.76 28 19 28H13C11.62 28 10.5 26.88 10.5 25.5" 
+        fill="none" stroke="url(#siphonPath)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Dynamic suction node -->
+  <circle cx="18.5" cy="13" r="1.2" fill="white" fill-opacity="0.9" />
+</svg>

@@ -71,13 +71,13 @@ body {
 .header h1 .logo {
   width: 32px;
   height: 32px;
-  background: var(--accent);
-  border-radius: 8px;
+  background: linear-gradient(135deg, #ff7a3d 0%, #d9480f 100%);
+  border-radius: 8.5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(232, 107, 48, 0.3);
 }
 
 .header p {
