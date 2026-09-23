@@ -580,23 +580,49 @@ class CompleteCrawler:
         async with async_playwright() as pw:
             browser = await pw.chromium.launch(
                 headless=True,
-                args=["--no-sandbox", "--disable-setuid-sandbox",
-                      "--disable-web-security"],
+                args=[
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-web-security",
+                    "--disable-blink-features=AutomationControlled",
+                ],
             )
             context = await browser.new_context(
                 viewport={"width": 1920, "height": 1080},
-                user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                            "AppleWebKit/537.36 (KHTML, like Gecko) "
-                            "Chrome/140.0.0.0 Safari/537.36"),
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/128.0.0.0 Safari/537.36"
+                ),
+                locale="id-ID",
+                timezone_id="Asia/Jakarta",
                 ignore_https_errors=True,
+                extra_http_headers={
+                    "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+                    "Sec-Ch-Ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+                    "Sec-Ch-Ua-Mobile": "?0",
+                    "Sec-Ch-Ua-Platform": '"Windows"',
+                },
             )
+            await context.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                });
+            """)
             page = await context.new_page()
             page.on("response", self._on_response)
             self._watch_posts(page)
 
             self._log("🌐 Loading page...")
             try:
-                await page.goto(self.start_url, wait_until="networkidle", timeout=60000)
+                resp = await page.goto(self.start_url, wait_until="networkidle", timeout=60000)
+                if resp:
+                    if resp.status == 403:
+                        self._log(f"⛔ Akses Ditolak (HTTP 403 Forbidden). Website {self.host} memproteksi halamannya dengan Anti-Bot/WAF (misal Akamai Bot Manager).")
+                    elif resp.status == 401:
+                        self._log(f"⛔ Butuh Login/Otentikasi (HTTP 401 Unauthorized) pada {self.host}.")
+                    elif resp.status >= 400:
+                        self._log(f"⚠️ Halaman target mengembalikan error HTTP {resp.status}.")
             except Exception as e:
                 self._log(f"  ⚠️ navigation: {e}")
 
@@ -699,12 +725,18 @@ class CompleteCrawler:
         files = self._build_files()
         elapsed = time.time() - started
 
-        self._log(
-            f"✅ {len(files)} files, {self.total_bytes // 1024}KB in {elapsed:.1f}s "
-            f"({self.stats['post_slots']} POST slots, {self.stats['chunks']} chunks, "
-            f"{self.stats['css_assets']} CSS assets, "
-            f"{self.stats['referenced']} HTML-referenced)"
-        )
+        if not self.captured:
+            self._log(
+                f"⚠️ Selesai dengan peringatan: 0 aset berhasil diunduh dalam {elapsed:.1f}s. "
+                f"Server target ({self.host}) kemungkinan memblokir crawler dengan firewall/anti-bot (Akamai/Cloudflare)."
+            )
+        else:
+            self._log(
+                f"✅ {len(files)} files, {self.total_bytes // 1024}KB in {elapsed:.1f}s "
+                f"({self.stats['post_slots']} POST slots, {self.stats['chunks']} chunks, "
+                f"{self.stats['css_assets']} CSS assets, "
+                f"{self.stats['referenced']} HTML-referenced)"
+            )
 
         return {
             "html": first_html,

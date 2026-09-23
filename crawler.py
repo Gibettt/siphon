@@ -271,8 +271,11 @@ class WebCrawler:
 
                 self._log(f"📄 Page: {url}")
                 content, hdrs, status = await fetch(client, url)
-                if not content or status == 0:
-                    self._log(f"  ✗ Failed (status={status})")
+                if not content or status == 0 or status >= 400:
+                    if status == 403:
+                        self._log(f"  ⛔ Akses Ditolak (HTTP 403: Bot Protection / WAF aktif pada {self.base_domain})")
+                    else:
+                        self._log(f"  ✗ Failed (status={status})")
                     continue
 
                 html = content.decode("utf-8", errors="ignore")

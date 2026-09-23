@@ -353,8 +353,9 @@ caches.open('deep-offline-v1').then(cache => cache.addAll(URLS_TO_CACHE));
                 args=[
                     "--no-sandbox",
                     "--disable-setuid-sandbox",
-                    "--disable-web-security",    # allow cross-origin for capture
+                    "--disable-web-security",
                     "--disable-features=IsolateOrigins,site-per-process",
+                    "--disable-blink-features=AutomationControlled",
                 ],
             )
             context = await browser.new_context(
@@ -362,10 +363,23 @@ caches.open('deep-offline-v1').then(cache => cache.addAll(URLS_TO_CACHE));
                 user_agent=(
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                     "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/126.0.0.0 Safari/537.36"
+                    "Chrome/128.0.0.0 Safari/537.36"
                 ),
+                locale="id-ID",
+                timezone_id="Asia/Jakarta",
                 ignore_https_errors=True,
+                extra_http_headers={
+                    "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+                    "Sec-Ch-Ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+                    "Sec-Ch-Ua-Mobile": "?0",
+                    "Sec-Ch-Ua-Platform": '"Windows"',
+                },
             )
+            await context.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                });
+            """)
 
             page = await context.new_page()
 
@@ -374,11 +388,18 @@ caches.open('deep-offline-v1').then(cache => cache.addAll(URLS_TO_CACHE));
 
             self._log("🌐 Opening browser and navigating...")
             try:
-                await page.goto(
+                resp = await page.goto(
                     self.start_url,
                     wait_until="networkidle",
                     timeout=60000,
                 )
+                if resp:
+                    if resp.status == 403:
+                        self._log(f"⛔ Akses Ditolak (HTTP 403 Forbidden). Website {self.base_domain} memproteksi halamannya dengan WAF / Anti-Bot.")
+                    elif resp.status == 401:
+                        self._log(f"⛔ Butuh Login/Otentikasi (HTTP 401 Unauthorized) pada {self.base_domain}.")
+                    elif resp.status >= 400:
+                        self._log(f"⚠️ Halaman target mengembalikan error HTTP {resp.status}.")
             except Exception as e:
                 self._log(f"  ⚠️ Navigation warning (continuing): {e}")
 
