@@ -221,8 +221,8 @@ async def start_crawl(req: CrawlRequest, background_tasks: BackgroundTasks):
     # On Vercel: force normal mode, limit pages/assets for timeout safety
     force_normal = IS_VERCEL and (req.deep_mode or req.complete_mode)
     if IS_VERCEL:
-        max_pages = min(req.max_pages, 5)
-        max_assets = min(req.max_assets, 100)
+        max_pages = min(req.max_pages, 10)
+        max_assets = min(req.max_assets, 200)
     else:
         max_pages = req.max_pages
         max_assets = req.max_assets
