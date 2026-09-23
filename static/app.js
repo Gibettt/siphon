@@ -70,8 +70,22 @@ async function startCrawl() {
       })
     });
     const data = await res.json();
-    currentJobId = data.job_id;
-    startPolling();
+
+    if (data.status) {
+      // Vercel: synchronous response — job already finished
+      currentJobId = data.id;
+      updateUI(data);
+      document.getElementById('startBtn').disabled = false;
+      showSpinner(false);
+      const fill = document.getElementById('progressFill');
+      fill.classList.remove('indeterminate');
+      fill.style.width = '100%';
+      if (data.status === 'error') fill.style.background = 'var(--red)';
+    } else {
+      // Local: async response — start polling
+      currentJobId = data.job_id;
+      startPolling();
+    }
   } catch (e) {
     errDiv.textContent = 'Gagal memulai: ' + e.message;
     document.getElementById('startBtn').disabled = false;
